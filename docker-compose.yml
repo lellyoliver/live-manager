@@ -1,0 +1,53 @@
+services:
+  db:
+    image: mariadb
+    restart: always
+    volumes:
+      - ./mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=db_live_manager
+      - MYSQL_USER=live_manager
+      - MYSQL_PASSWORD=Mj&~8UJL)|Vl2Rs`
+
+  laravel:
+    restart: on-failure
+    image: php:8.2-apache
+    container_name: live-manager
+    volumes:
+      - ./.docker/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./.docker/apache.conf:/etc/apache2/sites-available/000-default.conf
+      - ./live-manager:/var/www/html/
+
+    ports:
+      - 8082:80
+
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y wget unzip &&
+        wget -O composer-setup.php https://getcomposer.org/installer &&
+        php composer-setup.php --install-dir=/usr/local/bin --filename=composer &&
+        rm composer-setup.php &&
+        a2enmod rewrite &&
+        chown -R www-data:www-data /var/www/html/storage &&
+        chown -R www-data:www-data /var/www/html/bootstrap/cache &&
+        apache2-foreground
+      "
+
+  phpmyadmin:
+    restart: on-failure
+    image: phpmyadmin
+    depends_on:
+      - db
+    ports:
+      - 8083:80
+    environment:
+      - PMA_USER=live_manager
+      - PMA_PASSWORD=Mj&~8UJL)|Vl2Rs`
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
